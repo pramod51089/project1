@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Set your AWS region
+AWS_REGION="<your-region>"
+
+# Set your AWS account ID
+AWS_ACCOUNT_ID="<your-account-id>"
+
+# Set your ECR repository name
+REPOSITORY_NAME="<your-repository-name>"
+
+# Set the directory where you want to store the tar archives
+CUSTOM_DIRECTORY="/path/to/custom/directory"
+
+# Authenticate Docker with ECR
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+# List all image tags in the repository
+IMAGE_TAGS=$(aws ecr describe-images --repository-name $REPOSITORY_NAME --region $AWS_REGION --query 'imageDetails[*].imageTags' --output json | jq -r '.[][]')
+
+# Pull and save each image with its tag as a tar archive
+for TAG in $IMAGE_TAGS; do
+  echo "Pulling image with tag: $TAG"
+  docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME:$TAG
+  docker save -o $CUSTOM_DIRECTORY/$REPOSITORY_NAME:$TAG.tar $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME:$TAG
+done
+
+echo "All images with tags pulled and saved to $CUSTOM_DIRECTORY"
