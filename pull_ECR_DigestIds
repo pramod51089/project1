@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Set your AWS region
+AWS_REGION="<your-region>"
+
+# Set your AWS account ID
+AWS_ACCOUNT_ID="<your-account-id>"
+
+# Set your ECR repository name
+REPOSITORY_NAME="<your-repository-name>"
+
+# Set the directory where you want to store the tar archives
+CUSTOM_DIRECTORY="/path/to/custom/directory"
+
+# Authenticate Docker with ECR
+aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+# List all image details in the repository, including digest IDs
+IMAGE_DETAILS=$(aws ecr describe-images --repository-name $REPOSITORY_NAME --region $AWS_REGION --query 'imageDetails[*]' --output json)
+
+# Pull and save each image with its digest ID as a tar archive
+for IMAGE_INFO in $(echo "$IMAGE_DETAILS" | jq -c '.[]'); do
+  DIGEST_ID=$(echo "$IMAGE_INFO" | jq -r '.imageDigest')
+  echo "Pulling image with digest ID: $DIGEST_ID"
+  docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME@$DIGEST_ID
+  docker save -o $CUSTOM_DIRECTORY/$REPOSITORY_NAME:$DIGEST_ID.tar $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME@$DIGEST_ID
+done
+
+echo "All images with digest IDs pulled and saved to $CUSTOM_DIRECTORY"
