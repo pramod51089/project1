@@ -1,0 +1,2 @@
+Error parsing reference: "112306723855.dkr.ecr.eu-central-1.amazonaws.com/development/adc-base:" is not a valid repository/tag: invalid reference format
+invalid reference format: repository name must be lowercase
