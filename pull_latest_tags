@@ -23,8 +23,11 @@ for REPO in $REPOSITORIES; do
     echo "Pulling $REPO:$LATEST_TAG"
     docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$LATEST_TAG
 
+    # Convert repository name to lowercase
+    REPO_LOWER=$(echo "$REPO" | tr '[:upper:]' '[:lower:]')
+
     # Tag the pulled image with the custom repository
-    CUSTOM_TAG="$CUSTOM_REPOSITORY/$REPO:$LATEST_TAG"
+    CUSTOM_TAG="$CUSTOM_REPOSITORY/$REPO_LOWER:$LATEST_TAG"
     docker tag $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$LATEST_TAG $CUSTOM_TAG
 
     # Push the retagged image to the custom repository
