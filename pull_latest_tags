@@ -6,19 +6,33 @@ AWS_REGION="<your-region>"
 # Set your AWS account ID
 AWS_ACCOUNT_ID="<your-account-id>"
 
+# Set the custom repository where you want to store the images
+CUSTOM_REPOSITORY="<your-custom-repository>"
+
 # Authenticate Docker with ECR
 aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
 # List all repositories in the ECR registry
 REPOSITORIES=$(aws ecr describe-repositories --region $AWS_REGION --query 'repositories[*].repositoryName' --output json | jq -r '.[]')
 
-# Pull the latest tag from each repository
+# Pull the latest tag from each repository and store in the custom repository
 for REPO in $REPOSITORIES; do
   LATEST_TAG=$(aws ecr describe-images --repository-name $REPO --region $AWS_REGION --query 'images|sort_by(@.imagePushedAt)|[-1].imageTags[0]' --output json | jq -r '.')
   
   if [ "$LATEST_TAG" != "null" ]; then
     echo "Pulling $REPO:$LATEST_TAG"
     docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$LATEST_TAG
+
+    # Tag the pulled image with the custom repository
+    CUSTOM_TAG="$CUSTOM_REPOSITORY/$REPO:$LATEST_TAG"
+    docker tag $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$LATEST_TAG $CUSTOM_TAG
+
+    # Push the retagged image to the custom repository
+    docker push $CUSTOM_TAG
+
+    # Remove the local copies of the pulled and retagged images if desired
+    # docker rmi $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$LATEST_TAG
+    # docker rmi $CUSTOM_TAG
   else
     echo "No tags found for $REPO"
   fi
