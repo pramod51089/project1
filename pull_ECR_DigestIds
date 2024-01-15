@@ -27,3 +27,7 @@ for IMAGE_INFO in $(echo "$IMAGE_DETAILS" | jq -c '.[]'); do
 done
 
 echo "All images with digest IDs pulled and saved to $CUSTOM_DIRECTORY"
+
+failed to register layer: Error processing tar file(exit status 1): write /app/pub/static/frontend/Magento/luma/de_DE/Magento_Tinymce3/tiny_mce/plugins/media/media.htm: no space left on device
+failed to save image: invalid output path: directory "/home/shitopx/NextGenDevECR/dev2" does not exist
+All images with digest IDs pulled and saved to /home/shitopx/NextGenDevECR
