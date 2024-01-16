@@ -1,18 +1,19 @@
-Error: Invalid index
-│
-│   on modules\service\main.tf line 1325, in resource "aws_security_group" "this":
-│ 1325:   vpc_id      = data.aws_subnet.this[0].vpc_id
-│     ├────────────────
-│     │ data.aws_subnet.this is empty tuple
-│
-│ The given key does not identify an element in this collection value: the collection has no elements.
-╵
-╷
-│ Error: Invalid index
-│
-│   on modules\service\main.tf line 1325, in resource "aws_security_group" "this":
-│ 1325:   vpc_id      = data.aws_subnet.this[0].vpc_id
-│     ├────────────────
-│     │ data.aws_subnet.this is empty tuple
-│
-│ The given key does not identify an element in this collection value: the collection has no elements.
+data "aws_subnet" "this" {
+  count = length(var.subnet_ids) > 0 ? 1 : 0
+  id    = length(var.subnet_ids) > 0 ? element(var.subnet_ids, 0) : null
+}
+
+resource "aws_security_group" "this" {
+  count = length(data.aws_subnet.this) > 0 ? 1 : 0
+
+  name        = var.security_group_use_name_prefix ? null : local.security_group_name
+  name_prefix = var.security_group_use_name_prefix ? "${local.security_group_name}-" : null
+  description = var.security_group_description
+  vpc_id      = length(data.aws_subnet.this) > 0 ? data.aws_subnet.this[0].vpc_id : null
+
+  tags = merge(var.tags, var.security_group_tags)
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
