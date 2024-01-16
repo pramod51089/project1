@@ -1,19 +1,8 @@
-data "aws_subnet" "this" {
-  count = length(var.subnet_ids) > 0 ? 1 : 0
-  id    = length(var.subnet_ids) > 0 ? element(var.subnet_ids, 0) : null
-}
-
-resource "aws_security_group" "this" {
-  count = length(data.aws_subnet.this) > 0 ? 1 : 0
-
-  name        = var.security_group_use_name_prefix ? null : local.security_group_name
-  name_prefix = var.security_group_use_name_prefix ? "${local.security_group_name}-" : null
-  description = var.security_group_description
-  vpc_id      = length(data.aws_subnet.this) > 0 ? data.aws_subnet.this[0].vpc_id : null
-
-  tags = merge(var.tags, var.security_group_tags)
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
+module.cluster.aws_ecs_cluster.this[0]: Still creating... [10s elapsed]
+module.cluster.aws_ecs_cluster.this[0]: Creation complete after 11s [id=arn:aws:ecs:eu-central-1:455832469407:cluster/AWS_ECS]
+╷
+│ Error: creating ECS Task Definition (webapp): ClientException: Container list cannot be empty.
+│
+│   with module.service["Object1"].aws_ecs_task_definition.this[0],
+│   on modules\service\main.tf line 610, in resource "aws_ecs_task_definition" "this":
+│  610: resource "aws_ecs_task_definition" "this" {
