@@ -1,2 +1,9 @@
-Error parsing reference: "112306723855.dkr.ecr.eu-central-1.amazonaws.com/development/adc-base:" is not a valid repository/tag: invalid reference format
-invalid reference format: repository name must be lowercase
+Error: Error in function call
+│
+│   on modules\service\main.tf line 1311, in data "aws_subnet" "this":
+│ 1311:   id = element(var.subnet_ids, 0)
+│     ├────────────────
+│     │ while calling element(list, index)
+│     │ var.subnet_ids is empty list of string
+│
+│ Call to function "element" failed: cannot use element function with an empty list
