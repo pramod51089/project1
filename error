@@ -1,9 +1,4 @@
-Error: Error in function call
-│
-│   on modules\service\main.tf line 1311, in data "aws_subnet" "this":
-│ 1311:   id = element(var.subnet_ids, 0)
-│     ├────────────────
-│     │ while calling element(list, index)
-│     │ var.subnet_ids is empty list of string
-│
-│ Call to function "element" failed: cannot use element function with an empty list
+data "aws_subnet" "this" {
+  count = length(var.subnet_ids) > 0 ? 1 : 0
+  id    = length(var.subnet_ids) > 0 ? element(var.subnet_ids, 0) : null
+}
