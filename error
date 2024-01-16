@@ -1,8 +1,9 @@
-module.cluster.aws_ecs_cluster.this[0]: Still creating... [10s elapsed]
-module.cluster.aws_ecs_cluster.this[0]: Creation complete after 11s [id=arn:aws:ecs:eu-central-1:455832469407:cluster/AWS_ECS]
-╷
-│ Error: creating ECS Task Definition (webapp): ClientException: Container list cannot be empty.
-│
-│   with module.service["Object1"].aws_ecs_task_definition.this[0],
-│   on modules\service\main.tf line 610, in resource "aws_ecs_task_definition" "this":
-│  610: resource "aws_ecs_task_definition" "this" {
+variable "container_definitions" {
+  description = "Map of container definitions for ECS Task Definition"
+  type        = map(object({
+    name  = string
+    image = string
+    # Add other container attributes as needed
+  }))
+  default     = {}
+}
