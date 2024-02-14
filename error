@@ -1,9 +1,1 @@
-variable "container_definitions" {
-  description = "Map of container definitions for ECS Task Definition"
-  type        = map(object({
-    name  = string
-    image = string
-    # Add other container attributes as needed
-  }))
-  default     = {}
-}
+Could not validate a connection to Elasticsearch. No alive nodes found in your cluster
