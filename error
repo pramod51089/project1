@@ -1,1 +1,1 @@
-Could not validate a connection to Elasticsearch. No alive nodes found in your cluster
+def JAREXEC = "java -cp ${JARNAME}.jar -Denv=GRAVITY_${params.TARGET_ENV} -DcountryCodes=${params.USE_CASE} com.abbott.freestyle.CognitoGroupAddOrRemoveScript"
