@@ -1,28 +1,14 @@
-#!/bin/bash
-
-# Set your AWS region
-AWS_REGION="<your-region>"
-
-# Set your AWS account ID
-AWS_ACCOUNT_ID="<your-account-id>"
-
-# Set your ECR repository name
-REPOSITORY_NAME="<your-repository-name>"
-
-# Set the directory where you want to store the tar archives
-CUSTOM_DIRECTORY="/path/to/custom/directory"
-
-# Authenticate Docker with ECR
-aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-
-# List all image IDs in the repository
-IMAGE_IDS=$(aws ecr list-images --repository-name $REPOSITORY_NAME --region $AWS_REGION --query 'imageIds[*]' --output json)
-
-# Pull and save each image as a tar archive
-for IMAGE_ID in $(echo "$IMAGE_IDS" | jq -r '.[]'); do
-  echo "Pulling image $IMAGE_ID"
-  docker pull $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME:$IMAGE_ID
-  docker save -o $CUSTOM_DIRECTORY/$IMAGE_ID.tar $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$REPOSITORY_NAME:$IMAGE_ID
-done
-
-echo "All images pulled and saved to $CUSTOM_DIRECTORY"
+resource "aws_sns_topic_subscription" "this" {
+  for_each       = { for k, v in var.subscriptions : k => v if var.create_new_sns_topic && var.create_subscription && v.endpoint != null}
+  endpoint       = each.value.endpoint
+  protocol       = each.value.protocol
+  subscription_role_arn = each.value.protocol == "firehose" ? each.value.subscription_role_arn : null
+  topic_arn      = aws_sns_topic.this[0].arn
+  confirmation_timeout_in_minutes = lookup(each.value, "confirmation_timeout_in_minutes", null)
+  delivery_policy = lookup(each.value, "delivery_policy", null)
+  endpoint_auto_confirms = lookup(each.value, "endpoint_auto_confirms", false)
+  filter_policy  = lookup(each.value, "filter_policy", null)
+  raw_message_delivery = lookup(each.value, "raw_message_delivery", false)
+  filter_policy_scope = lookup(each.value, "filter_policy_scope", null)
+  redrive_policy = lookup(each.value, "redrive_policy", null)
+}
