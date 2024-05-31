@@ -1,6 +1,13 @@
-Error: Missing required argument
-│
-│   on main.tf line 1, in module "aws-sns":
-│    1: module "aws-sns" {
-│
-│ The argument "subscriptions" is required, but no definition was found.
+module "aws-sns" {
+    #source = "../modules/sns"
+    #source = "git::https://bitbucket.devops.abbott/scm/bts_ent_191/aws-sns.git?ref=feature/aws-sns"
+    source = "git::ssh://git@bitbucket-ssh.devops.abbott:7999/bts_ent_191/aws-sns.git?ref=feature/aws-sns"
+    tags ={
+    Division    = var.division
+    Project     = var.project
+    Application = var.application
+    Environment = var.environment
+    Node        = var.node
+    Created_by  = var.created_by
+    }
+}
