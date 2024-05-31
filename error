@@ -1,1 +1,6 @@
-def JAREXEC = "java -cp ${JARNAME}.jar -Denv=GRAVITY_${params.TARGET_ENV} -DcountryCodes=${params.USE_CASE} com.abbott.freestyle.CognitoGroupAddOrRemoveScript"
+Error: Missing required argument
+│
+│   on main.tf line 1, in module "aws-sns":
+│    1: module "aws-sns" {
+│
+│ The argument "subscriptions" is required, but no definition was found.
