@@ -1,12 +1,9 @@
-output "cloud9_id" {
-  description = "The URL for the created Amazon SQS queue"
-  value       = "${element(concat(aws_cloud9_environment_ec2.this.*.id, list("")), 0)}"
-}
-output "cloud9_arn" {
-  description = "The URL for the created Amazon SQS queue"
-  value       = "${element(concat(aws_cloud9_environment_ec2.this.*.arn, list("")), 0)}"
-}
-output "cloud9_type" {
-  description = "The URL for the created Amazon SQS queue"
-  value       = "${element(concat(aws_cloud9_environment_ec2.this.*.type, list("")), 0)}"
-}
+terraform plan
+Releasing state lock. This may take a few moments...
+╷
+│ Error: Error in function call
+│
+│   on modules\cloud9\output.tf line 3, in output "cloud9_id":
+│    3:   value       = "${element(concat(aws_cloud9_environment_ec2.this.*.id, list("")), 0)}"
+│     ├────────────────
+│     │ while calling list(vals...)
