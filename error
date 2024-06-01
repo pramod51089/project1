@@ -1,9 +1,14 @@
-Error: Error in function call
-│
-│   on modules\cloud9\output.tf line 3, in output "cloud9_id":
-│    3:   value       = "${element(concat(aws_cloud9_environment_ec2.this.*.id, list("")), 0)}"
-│     ├────────────────
-│     │ while calling list(vals...)
-│
-│ Call to function "list" failed: the "list" function was deprecated in Terraform v0.12 and is no longer available;   
-│ use tolist([ ... ]) syntax to write a literal list.
+output "cloud9_id" {
+  description = "The ID of the created AWS Cloud9 environment"
+  value       = element(concat(aws_cloud9_environment_ec2.this.*.id, [""]), 0)
+}
+
+output "cloud9_arn" {
+  description = "The ARN of the created AWS Cloud9 environment"
+  value       = element(concat(aws_cloud9_environment_ec2.this.*.arn, [""]), 0)
+}
+
+output "cloud9_type" {
+  description = "The type of the created AWS Cloud9 environment"
+  value       = element(concat(aws_cloud9_environment_ec2.this.*.type, [""]), 0)
+}
