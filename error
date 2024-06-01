@@ -1,9 +1,9 @@
-terraform plan
-Releasing state lock. This may take a few moments...
-╷
-│ Error: Error in function call
+Error: Error in function call
 │
 │   on modules\cloud9\output.tf line 3, in output "cloud9_id":
 │    3:   value       = "${element(concat(aws_cloud9_environment_ec2.this.*.id, list("")), 0)}"
 │     ├────────────────
 │     │ while calling list(vals...)
+│
+│ Call to function "list" failed: the "list" function was deprecated in Terraform v0.12 and is no longer available;   
+│ use tolist([ ... ]) syntax to write a literal list.
