@@ -1,14 +1,63 @@
-output "cloud9_id" {
-  description = "The ID of the created AWS Cloud9 environment"
-  value       = element(concat(aws_cloud9_environment_ec2.this.*.id, [""]), 0)
+module "aws-kinesis" {
+    source = ".//modules/kinesis"
+    #source = "git::https://bitbucket.devops.abbott/scm/bts_ent_191/aws-sns.git?ref=feature/aws-cloud9"
+    #source = "git::ssh://git@bitbucket-ssh.devops.abbott:7999/bts_ent_191/aws-kinesis.git?ref=feature/aws-kinesis"
+    tags ={
+    Division    = var.division
+    Project     = var.project
+    Application = var.application
+    Environment = var.environment
+    Node        = var.node
+    Created_by  = var.created_by
+    }
 }
-
-output "cloud9_arn" {
-  description = "The ARN of the created AWS Cloud9 environment"
-  value       = element(concat(aws_cloud9_environment_ec2.this.*.arn, [""]), 0)
-}
-
-output "cloud9_type" {
-  description = "The type of the created AWS Cloud9 environment"
-  value       = element(concat(aws_cloud9_environment_ec2.this.*.type, [""]), 0)
-}
+terraform plan
+Releasing state lock. This may take a few moments...
+╷
+│ Error: Missing required argument
+│
+│   on main.tf line 7, in module "aws-kinesis":
+│    7: module "aws-kinesis" {
+│
+│ The argument "role_arn" is required, but no definition was found.
+╵
+╷
+│ Error: Missing required argument
+│
+│   on main.tf line 7, in module "aws-kinesis":
+│    7: module "aws-kinesis" {
+│
+│ The argument "s3_bucket_arn" is required, but no definition was found.
+╵
+╷
+│ Error: Missing required argument
+│
+│   on main.tf line 7, in module "aws-kinesis":
+│    7: module "aws-kinesis" {
+│
+│ The argument "name" is required, but no definition was found.
+╵
+╷
+│ Error: Missing required argument
+│
+│   on main.tf line 7, in module "aws-kinesis":
+│    7: module "aws-kinesis" {
+│
+│ The argument "enable_s3_logging" is required, but no definition was found.
+╵
+╷
+│ Error: Missing required argument
+│
+│   on main.tf line 7, in module "aws-kinesis":
+│    7: module "aws-kinesis" {
+│
+│ The argument "cloudwatch_log_group_name" is required, but no definition was found.
+╵
+╷
+│ Error: Missing required argument
+│
+│   on main.tf line 7, in module "aws-kinesis":
+│    7: module "aws-kinesis" {
+│
+│ The argument "s3_delivery_cloudwatch_log_stream_name" is required, but no definition was found.
+╵
