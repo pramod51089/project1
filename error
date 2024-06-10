@@ -1,63 +1,21 @@
 module "aws-kinesis" {
-    source = ".//modules/kinesis"
-    #source = "git::https://bitbucket.devops.abbott/scm/bts_ent_191/aws-sns.git?ref=feature/aws-cloud9"
-    #source = "git::ssh://git@bitbucket-ssh.devops.abbott:7999/bts_ent_191/aws-kinesis.git?ref=feature/aws-kinesis"
-    tags ={
-    Division    = var.division
-    Project     = var.project
-    Application = var.application
-    Environment = var.environment
-    Node        = var.node
-    Created_by  = var.created_by
+    source = "./modules/kinesis"  # Ensure the correct path here
+
+    # Required arguments
+    role_arn                              = var.role_arn
+    s3_bucket_arn                         = var.s3_bucket_arn
+    name                                  = var.name
+    enable_s3_logging                     = var.enable_s3_logging
+    cloudwatch_log_group_name             = var.cloudwatch_log_group_name
+    s3_delivery_cloudwatch_log_stream_name = var.s3_delivery_cloudwatch_log_stream_name
+
+    # Tags
+    tags = {
+        Division    = var.division
+        Project     = var.project
+        Application = var.application
+        Environment = var.environment
+        Node        = var.node
+        Created_by  = var.created_by
     }
 }
-terraform plan
-Releasing state lock. This may take a few moments...
-╷
-│ Error: Missing required argument
-│
-│   on main.tf line 7, in module "aws-kinesis":
-│    7: module "aws-kinesis" {
-│
-│ The argument "role_arn" is required, but no definition was found.
-╵
-╷
-│ Error: Missing required argument
-│
-│   on main.tf line 7, in module "aws-kinesis":
-│    7: module "aws-kinesis" {
-│
-│ The argument "s3_bucket_arn" is required, but no definition was found.
-╵
-╷
-│ Error: Missing required argument
-│
-│   on main.tf line 7, in module "aws-kinesis":
-│    7: module "aws-kinesis" {
-│
-│ The argument "name" is required, but no definition was found.
-╵
-╷
-│ Error: Missing required argument
-│
-│   on main.tf line 7, in module "aws-kinesis":
-│    7: module "aws-kinesis" {
-│
-│ The argument "enable_s3_logging" is required, but no definition was found.
-╵
-╷
-│ Error: Missing required argument
-│
-│   on main.tf line 7, in module "aws-kinesis":
-│    7: module "aws-kinesis" {
-│
-│ The argument "cloudwatch_log_group_name" is required, but no definition was found.
-╵
-╷
-│ Error: Missing required argument
-│
-│   on main.tf line 7, in module "aws-kinesis":
-│    7: module "aws-kinesis" {
-│
-│ The argument "s3_delivery_cloudwatch_log_stream_name" is required, but no definition was found.
-╵
