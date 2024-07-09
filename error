@@ -1,21 +1,94 @@
-module "aws-kinesis" {
-    source = "./modules/kinesis"  # Ensure the correct path here
-
-    # Required arguments
-    role_arn                              = var.role_arn
-    s3_bucket_arn                         = var.s3_bucket_arn
-    name                                  = var.name
-    enable_s3_logging                     = var.enable_s3_logging
-    cloudwatch_log_group_name             = var.cloudwatch_log_group_name
-    s3_delivery_cloudwatch_log_stream_name = var.s3_delivery_cloudwatch_log_stream_name
-
-    # Tags
-    tags = {
-        Division    = var.division
-        Project     = var.project
-        Application = var.application
-        Environment = var.environment
-        Node        = var.node
-        Created_by  = var.created_by
-    }
-}
+# This AWS SAM template has been generated from your function's configuration. If
+# your function has one or more triggers, note that the AWS resources associated
+# with these triggers aren't fully specified in this template and include
+# placeholder values. Open this template in AWS Application Composer or your
+# favorite IDE and modify it to specify a serverless application with other AWS
+# resources.
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: An AWS Serverless Application Model template describing your function.
+Resources:
+  AMIDeletionIrelandAndFrankfurt:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Description: >-
+        Old AMIs deletion - Weekly AMIs retained for a Month; Monthly AMI
+        retained for an year
+      MemorySize: 512
+      Timeout: 300
+      Handler: com.abbott.lambdafun.OldAMIsDeletion::handleRequest
+      Runtime: java8
+      Architectures:
+        - x86_64
+      EphemeralStorage:
+        Size: 512
+      EventInvokeConfig:
+        MaximumEventAgeInSeconds: 21600
+        MaximumRetryAttempts: 2
+      PackageType: Zip
+      Policies:
+        - Statement:
+            - Sid: Stmt1482926468000
+              Effect: Allow
+              Action:
+                - ec2:DeleteSnapshot
+                - ec2:DeregisterImage
+              Resource:
+                - '*'
+            - Sid: Stmt1477413987000
+              Effect: Allow
+              Action:
+                - lambda:InvokeFunction
+              Resource:
+                - '*'
+            - Sid: Stmt1476357160000
+              Effect: Allow
+              Action:
+                - ec2:DescribeInstances
+                - ec2:CreateImage
+                - ec2:DescribeImage
+                - ec2:DescribeImage
+                - ec2:CopyImage
+                - ec2:DescribeSubnets
+                - ec2:DescribeImages
+              Resource:
+                - '*'
+            - Sid: Stmt1476357284000
+              Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:PutObjectAcl
+                - s33:GetObject
+              Resource:
+                - '*'
+            - Sid: Stmt1477414265000
+              Effect: Allow
+              Action:
+                - s3:*
+              Resource:
+                - '*'
+            - Sid: Stmt1478578966000
+              Effect: Allow
+              Action:
+                - logs:*
+              Resource:
+                - '*'
+            - Sid: Stmt1478668843000
+              Effect: Allow
+              Action:
+                - ec2:CopySnapshot
+                - ec2:CreateSnapshot
+                - ec2:DescribeVolumes
+                - ec2:DescribeSnapshots
+              Resource:
+                - '*'
+      SnapStart:
+        ApplyOn: None
+      Events:
+        Schedule1:
+          Type: Schedule
+          Properties:
+            Schedule: cron(00 22 ? * SUN *)
+      RuntimeManagementConfig:
+        UpdateRuntimeOn: Auto
