@@ -1,94 +1,209 @@
-# This AWS SAM template has been generated from your function's configuration. If
-# your function has one or more triggers, note that the AWS resources associated
-# with these triggers aren't fully specified in this template and include
-# placeholder values. Open this template in AWS Application Composer or your
-# favorite IDE and modify it to specify a serverless application with other AWS
-# resources.
-AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
-Description: An AWS Serverless Application Model template describing your function.
-Resources:
-  AMIDeletionIrelandAndFrankfurt:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: .
-      Description: >-
-        Old AMIs deletion - Weekly AMIs retained for a Month; Monthly AMI
-        retained for an year
-      MemorySize: 512
-      Timeout: 300
-      Handler: com.abbott.lambdafun.OldAMIsDeletion::handleRequest
-      Runtime: java8
-      Architectures:
-        - x86_64
-      EphemeralStorage:
-        Size: 512
-      EventInvokeConfig:
-        MaximumEventAgeInSeconds: 21600
-        MaximumRetryAttempts: 2
-      PackageType: Zip
-      Policies:
-        - Statement:
-            - Sid: Stmt1482926468000
-              Effect: Allow
-              Action:
-                - ec2:DeleteSnapshot
-                - ec2:DeregisterImage
-              Resource:
-                - '*'
-            - Sid: Stmt1477413987000
-              Effect: Allow
-              Action:
-                - lambda:InvokeFunction
-              Resource:
-                - '*'
-            - Sid: Stmt1476357160000
-              Effect: Allow
-              Action:
-                - ec2:DescribeInstances
-                - ec2:CreateImage
-                - ec2:DescribeImage
-                - ec2:DescribeImage
-                - ec2:CopyImage
-                - ec2:DescribeSubnets
-                - ec2:DescribeImages
-              Resource:
-                - '*'
-            - Sid: Stmt1476357284000
-              Effect: Allow
-              Action:
-                - s3:PutObject
-                - s3:PutObjectAcl
-                - s33:GetObject
-              Resource:
-                - '*'
-            - Sid: Stmt1477414265000
-              Effect: Allow
-              Action:
-                - s3:*
-              Resource:
-                - '*'
-            - Sid: Stmt1478578966000
-              Effect: Allow
-              Action:
-                - logs:*
-              Resource:
-                - '*'
-            - Sid: Stmt1478668843000
-              Effect: Allow
-              Action:
-                - ec2:CopySnapshot
-                - ec2:CreateSnapshot
-                - ec2:DescribeVolumes
-                - ec2:DescribeSnapshots
-              Resource:
-                - '*'
-      SnapStart:
-        ApplyOn: None
-      Events:
-        Schedule1:
-          Type: Schedule
-          Properties:
-            Schedule: cron(00 22 ? * SUN *)
-      RuntimeManagementConfig:
-        UpdateRuntimeOn: Auto
+package com.abbott.lambdafun;
+
+import com.amazonaws.AmazonClientException;
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
+import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.model.BlockDeviceMapping;
+import com.amazonaws.services.ec2.model.DeleteSnapshotRequest;
+import com.amazonaws.services.ec2.model.DeregisterImageRequest;
+import com.amazonaws.services.ec2.model.DescribeImagesRequest;
+import com.amazonaws.services.ec2.model.DescribeImagesResult;
+import com.amazonaws.services.ec2.model.Filter;
+import com.amazonaws.services.ec2.model.Image;
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.RequestHandler;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+public class OldAMIsDeletion implements RequestHandler<ScheduledEvent, Void> {
+   DateFormat dateFormat = new SimpleDateFormat("yyyy-MMM-dd-hh-mm-ss");
+   Calendar cal = Calendar.getInstance();
+   AmazonEC2 ec2ClientIreland = new AmazonEC2Client(new EnvironmentVariableCredentialsProvider());
+   AmazonEC2 ec2ClientFrankfurt = new AmazonEC2Client(new EnvironmentVariableCredentialsProvider());
+   SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+
+   public Void handleRequest(ScheduledEvent arg0, Context arg1) {
+      try {
+         System.out.println("Execution Started in OldAMIsDeletion Class at: " + this.dateFormat.format(this.cal.getTime()));
+         this.ec2ClientIreland.setEndpoint("https://ec2.eu-west-1.amazonaws.com");
+         this.ec2ClientFrankfurt.setEndpoint("https://ec2.eu-central-1.amazonaws.com");
+         DescribeImagesResult describeImagesResultIreland = this.ec2ClientIreland.describeImages((new DescribeImagesRequest()).withFilters(new Filter[]{(new Filter()).withName("owner-id").withValues(new String[]{"054935078281"})}));
+         DescribeImagesResult describeImagesResultFrankfurt = this.ec2ClientFrankfurt.describeImages((new DescribeImagesRequest()).withFilters(new Filter[]{(new Filter()).withName("owner-id").withValues(new String[]{"054935078281"})}));
+         List<Image> irelandAMIList = describeImagesResultIreland.getImages();
+         System.out.println("Checking Ireland Region Images : ");
+         System.out.println("Total Number of Images In Ireland are: " + irelandAMIList.size());
+         Iterator var7 = irelandAMIList.iterator();
+
+         label147:
+         while(true) {
+            while(true) {
+               Image image;
+               boolean deregisterFlag;
+               boolean deregiseterSuccess;
+               do {
+                  Date creationDate;
+                  if (!var7.hasNext()) {
+                     List<Image> frankfurtAMIList = describeImagesResultFrankfurt.getImages();
+                     System.out.println("Checking Frankfurt Region Images :");
+                     System.out.println("Total Number of Images In Frankfurt are: " + frankfurtAMIList.size());
+                     Iterator var28 = frankfurtAMIList.iterator();
+
+                     while(true) {
+                        while(true) {
+                           Image image;
+                           do {
+                              if (!var28.hasNext()) {
+                                 break label147;
+                              }
+
+                              image = (Image)var28.next();
+                              deregiseterSuccess = false;
+                              if (image.getName() != null && image.getName().startsWith("DR-i")) {
+                                 String creationDateinString = image.getCreationDate();
+                                 creationDate = this.formatter.parse(creationDateinString);
+                                 Date date = new Date();
+                                 long diff = date.getTime() - creationDate.getTime();
+                                 int ageinDaysofAMI = (int)TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+                                 System.out.println("Image " + image.getImageId() + " is " + ageinDaysofAMI + " old.");
+                                 if (ageinDaysofAMI > 365) {
+                                    deregiseterSuccess = true;
+                                 } else if (ageinDaysofAMI > 30 && creationDate.getDate() < 24) {
+                                    deregiseterSuccess = true;
+                                 } else {
+                                    System.out.println("But the creation date is " + creationDate.getDate() + ". Hence retaining it as per retention policy");
+                                 }
+                              }
+                           } while(!deregiseterSuccess);
+
+                           System.out.println("Deleting the AMI : " + image.getImageId() + ": " + image.getName());
+                           boolean deregiseterSuccess = false;
+
+                           try {
+                              this.ec2ClientFrankfurt.deregisterImage((new DeregisterImageRequest()).withImageId(image.getImageId()));
+                              deregiseterSuccess = true;
+                           } catch (AmazonServiceException var18) {
+                              System.out.println("AmazonServiceException in handleRequest : OldAMIDeletion");
+                              var18.printStackTrace();
+                           }
+
+                           if (deregiseterSuccess) {
+                              System.out.println("Deleted the AMI :" + image.getImageId() + ": " + image.getName());
+                              List<BlockDeviceMapping> blockdevicemappings = image.getBlockDeviceMappings();
+                              Iterator var39 = blockdevicemappings.iterator();
+
+                              while(var39.hasNext()) {
+                                 BlockDeviceMapping blk = (BlockDeviceMapping)var39.next();
+                                 String snapshotId = blk.getEbs().getSnapshotId();
+                                 System.out.println("Deleting the Snapshot " + snapshotId + " of the AMI :" + image.getImageId());
+                                 boolean deleteSnapshotSuccess = false;
+
+                                 try {
+                                    this.ec2ClientFrankfurt.deleteSnapshot((new DeleteSnapshotRequest()).withSnapshotId(snapshotId));
+                                    deleteSnapshotSuccess = true;
+                                 } catch (AmazonServiceException var17) {
+                                    System.out.println("AmazonServiceException in handleRequest : OldAMIsDeletion");
+                                    var17.printStackTrace();
+                                 }
+
+                                 if (deleteSnapshotSuccess) {
+                                    System.out.println("Deleted the Snapshot " + snapshotId + " of the AMI :" + image.getImageId() + " : " + image.getName());
+                                 } else {
+                                    System.out.println("There was a problem deleting the Snapshot : " + snapshotId + " of the AMI :" + image.getImageId() + " : " + image.getName());
+                                 }
+                              }
+                           } else {
+                              System.out.println("There was a problem deleting the AMI : " + image.getImageId() + ": " + image.getName());
+                           }
+                        }
+                     }
+                  }
+
+                  image = (Image)var7.next();
+                  deregisterFlag = false;
+                  if (image.getName() != null && image.getName().startsWith("DR-i")) {
+                     String creationDateinString = image.getCreationDate();
+                     Date creationDate = this.formatter.parse(creationDateinString);
+                     creationDate = new Date();
+                     long diff = creationDate.getTime() - creationDate.getTime();
+                     int ageinDaysofAMI = (int)TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+                     System.out.println("Image " + image.getImageId() + " is " + ageinDaysofAMI + " old.");
+                     if (ageinDaysofAMI > 365) {
+                        deregisterFlag = true;
+                     } else if (ageinDaysofAMI > 30 && creationDate.getDate() < 24) {
+                        deregisterFlag = true;
+                     } else {
+                        System.out.println("But the creation date is " + creationDate.getDate() + ". Hence retaining it as per retention policy");
+                     }
+                  }
+               } while(!deregisterFlag);
+
+               System.out.println("Deleting the AMI : " + image.getImageId() + ": " + image.getName());
+               deregiseterSuccess = false;
+
+               try {
+                  this.ec2ClientIreland.deregisterImage((new DeregisterImageRequest()).withImageId(image.getImageId()));
+                  deregiseterSuccess = true;
+               } catch (AmazonServiceException var20) {
+                  System.out.println("AmazonServiceException in handleRequest : OldAMIDeletion");
+                  var20.printStackTrace();
+               }
+
+               if (deregiseterSuccess) {
+                  System.out.println("Deleted the AMI :" + image.getImageId() + ": " + image.getName());
+                  List<BlockDeviceMapping> blockdevicemappings = image.getBlockDeviceMappings();
+                  Iterator var35 = blockdevicemappings.iterator();
+
+                  while(var35.hasNext()) {
+                     BlockDeviceMapping blk = (BlockDeviceMapping)var35.next();
+                     String snapshotId = blk.getEbs().getSnapshotId();
+                     System.out.println("Deleting the Snapshot " + snapshotId + " of the AMI :" + image.getImageId());
+                     boolean deleteSnapshotSuccess = false;
+
+                     try {
+                        this.ec2ClientIreland.deleteSnapshot((new DeleteSnapshotRequest()).withSnapshotId(snapshotId));
+                        deleteSnapshotSuccess = true;
+                     } catch (AmazonServiceException var19) {
+                        System.out.println("AmazonServiceException in handleRequest : OldAMIsDeletion");
+                        var19.printStackTrace();
+                     }
+
+                     if (deleteSnapshotSuccess) {
+                        System.out.println("Deleted the Snapshot " + snapshotId + " of the AMI :" + image.getImageId() + " : " + image.getName());
+                     } else {
+                        System.out.println("There was a problem deleting the Snapshot : " + snapshotId + " of the AMI :" + image.getImageId() + " : " + image.getName());
+                     }
+                  }
+               } else {
+                  System.out.println("There was a problem deleting the AMI : " + image.getImageId() + ": " + image.getName());
+               }
+            }
+         }
+      } catch (AmazonServiceException var21) {
+         System.out.println("AmazonServiceException in handleRequest : OldAMIDeletion");
+         var21.printStackTrace();
+      } catch (IllegalArgumentException var22) {
+         System.out.println("IllegalArgumentException in handleRequest : OldAMIDeletion");
+         var22.printStackTrace();
+      } catch (AmazonClientException var23) {
+         System.out.println("AmazonClientException in  handleRequest :OldAMIDeletion");
+         var23.printStackTrace();
+      } catch (ParseException var24) {
+         System.out.println("ParseException in handleRequest : OldAMIDeletion");
+         var24.printStackTrace();
+      } catch (Exception var25) {
+         System.out.println("Exception in handleRequest : OldAMIDeletion");
+         var25.printStackTrace();
+      }
+
+      System.out.println("Execution Ended in OldAMIDeletion Class at : " + this.dateFormat.format(this.cal.getTime()));
+      return null;
+   }
+}
