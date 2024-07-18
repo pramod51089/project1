@@ -1,209 +1,81 @@
-package com.abbott.lambdafun;
+locals {
+  tags = {
+    Division    = "${var.division}"
+    Project     = "${var.project}"
+    Application = "${var.application}"
+    Environment = "${var.environment}"
+    Node        = "${var.node}"
+    Created_by  = "${var.created_by}"
+  }
+}
 
-import com.amazonaws.AmazonClientException;
-import com.amazonaws.AmazonServiceException;
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2Client;
-import com.amazonaws.services.ec2.model.BlockDeviceMapping;
-import com.amazonaws.services.ec2.model.DeleteSnapshotRequest;
-import com.amazonaws.services.ec2.model.DeregisterImageRequest;
-import com.amazonaws.services.ec2.model.DescribeImagesRequest;
-import com.amazonaws.services.ec2.model.DescribeImagesResult;
-import com.amazonaws.services.ec2.model.Filter;
-import com.amazonaws.services.ec2.model.Image;
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.RequestHandler;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+#---- VPC Remote state
 
-public class OldAMIsDeletion implements RequestHandler<ScheduledEvent, Void> {
-   DateFormat dateFormat = new SimpleDateFormat("yyyy-MMM-dd-hh-mm-ss");
-   Calendar cal = Calendar.getInstance();
-   AmazonEC2 ec2ClientIreland = new AmazonEC2Client(new EnvironmentVariableCredentialsProvider());
-   AmazonEC2 ec2ClientFrankfurt = new AmazonEC2Client(new EnvironmentVariableCredentialsProvider());
-   SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+data "terraform_remote_state" "vpc" {
+  backend = "s3"
+  workspace = "${terraform.workspace}"
+  
+  config = {
+    bucket = "${var.terraform_remote_state_bucket}"
+    key = "${var.terraform_remote_state_vpc_key}"
+    region = "${var.terraform_remote_state_region}"
+  }
+}
 
-   public Void handleRequest(ScheduledEvent arg0, Context arg1) {
-      try {
-         System.out.println("Execution Started in OldAMIsDeletion Class at: " + this.dateFormat.format(this.cal.getTime()));
-         this.ec2ClientIreland.setEndpoint("https://ec2.eu-west-1.amazonaws.com");
-         this.ec2ClientFrankfurt.setEndpoint("https://ec2.eu-central-1.amazonaws.com");
-         DescribeImagesResult describeImagesResultIreland = this.ec2ClientIreland.describeImages((new DescribeImagesRequest()).withFilters(new Filter[]{(new Filter()).withName("owner-id").withValues(new String[]{"054935078281"})}));
-         DescribeImagesResult describeImagesResultFrankfurt = this.ec2ClientFrankfurt.describeImages((new DescribeImagesRequest()).withFilters(new Filter[]{(new Filter()).withName("owner-id").withValues(new String[]{"054935078281"})}));
-         List<Image> irelandAMIList = describeImagesResultIreland.getImages();
-         System.out.println("Checking Ireland Region Images : ");
-         System.out.println("Total Number of Images In Ireland are: " + irelandAMIList.size());
-         Iterator var7 = irelandAMIList.iterator();
+#---- Security group Remote state
 
-         label147:
-         while(true) {
-            while(true) {
-               Image image;
-               boolean deregisterFlag;
-               boolean deregiseterSuccess;
-               do {
-                  Date creationDate;
-                  if (!var7.hasNext()) {
-                     List<Image> frankfurtAMIList = describeImagesResultFrankfurt.getImages();
-                     System.out.println("Checking Frankfurt Region Images :");
-                     System.out.println("Total Number of Images In Frankfurt are: " + frankfurtAMIList.size());
-                     Iterator var28 = frankfurtAMIList.iterator();
+data "terraform_remote_state" "sg" {
+  backend = "s3"
+  workspace = "${terraform.workspace}"
+  
+  config = {
+    bucket = "${var.terraform_remote_state_bucket}"
+    key = "${var.terraform_remote_state_sg_key}"
+    region = "${var.terraform_remote_state_region}"
+  }
+}
 
-                     while(true) {
-                        while(true) {
-                           Image image;
-                           do {
-                              if (!var28.hasNext()) {
-                                 break label147;
-                              }
+#---- VPC 
 
-                              image = (Image)var28.next();
-                              deregiseterSuccess = false;
-                              if (image.getName() != null && image.getName().startsWith("DR-i")) {
-                                 String creationDateinString = image.getCreationDate();
-                                 creationDate = this.formatter.parse(creationDateinString);
-                                 Date date = new Date();
-                                 long diff = date.getTime() - creationDate.getTime();
-                                 int ageinDaysofAMI = (int)TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
-                                 System.out.println("Image " + image.getImageId() + " is " + ageinDaysofAMI + " old.");
-                                 if (ageinDaysofAMI > 365) {
-                                    deregiseterSuccess = true;
-                                 } else if (ageinDaysofAMI > 30 && creationDate.getDate() < 24) {
-                                    deregiseterSuccess = true;
-                                 } else {
-                                    System.out.println("But the creation date is " + creationDate.getDate() + ". Hence retaining it as per retention policy");
-                                 }
-                              }
-                           } while(!deregiseterSuccess);
+data "aws_vpc" "vpc" {
+  id = "${data.terraform_remote_state.vpc.vpc_id}"
+}
 
-                           System.out.println("Deleting the AMI : " + image.getImageId() + ": " + image.getName());
-                           boolean deregiseterSuccess = false;
+#---- Create Elasticache replication group
 
-                           try {
-                              this.ec2ClientFrankfurt.deregisterImage((new DeregisterImageRequest()).withImageId(image.getImageId()));
-                              deregiseterSuccess = true;
-                           } catch (AmazonServiceException var18) {
-                              System.out.println("AmazonServiceException in handleRequest : OldAMIDeletion");
-                              var18.printStackTrace();
-                           }
+resource "aws_elasticache_replication_group" "tf_redis" {
+  replication_group_id          = "${format("%.20s","${var.environment}-${var.redis_name}")}"
+  replication_group_description = "Terraform-managed ElastiCache replication group for ${var.environment}-${var.redis_name}-${data.aws_vpc.vpc.tags["Name"]}"
+  number_cache_clusters         = "${var.redis_clusters}"
+  node_type                     = "${var.redis_node_type}"
+  automatic_failover_enabled    = "${var.redis_failover}"
+  engine_version                = "${var.redis_version}"
+  port                          = "${var.redis_port}"
+  parameter_group_name          = "${aws_elasticache_parameter_group.tf_redis_parameter_group.id}"
+  subnet_group_name             = "${aws_elasticache_subnet_group.tf_redis_subnet_group.id}"
+  security_group_ids            = ["${data.terraform_remote_state.sg.redis_security_group}"]
+  apply_immediately             = "${var.apply_immediately}"
+  maintenance_window            = "${var.redis_maintenance_window}"
+  snapshot_window               = "${var.redis_snapshot_window}"
+  snapshot_retention_limit      = "${var.redis_snapshot_retention_limit}"
+  at_rest_encryption_enabled    = "${var.redis_at_rest_encryption_enabled}"
+  transit_encryption_enabled    = "${var.redis_transit_encryption_enabled}"
+}
 
-                           if (deregiseterSuccess) {
-                              System.out.println("Deleted the AMI :" + image.getImageId() + ": " + image.getName());
-                              List<BlockDeviceMapping> blockdevicemappings = image.getBlockDeviceMappings();
-                              Iterator var39 = blockdevicemappings.iterator();
+#---- Create Elasticache parameter group
 
-                              while(var39.hasNext()) {
-                                 BlockDeviceMapping blk = (BlockDeviceMapping)var39.next();
-                                 String snapshotId = blk.getEbs().getSnapshotId();
-                                 System.out.println("Deleting the Snapshot " + snapshotId + " of the AMI :" + image.getImageId());
-                                 boolean deleteSnapshotSuccess = false;
+resource "aws_elasticache_parameter_group" "tf_redis_parameter_group" {
+  name        = "${replace(format("%.255s", lower(replace("${var.environment}-${var.redis_name}-${data.aws_vpc.vpc.tags["Name"]}", "_", "-"))), "/\\s/", "-")}"
+  description = "Terraform-managed ElastiCache parameter group for ${var.environment}-${var.redis_name}-${data.aws_vpc.vpc.tags["Name"]}"
 
-                                 try {
-                                    this.ec2ClientFrankfurt.deleteSnapshot((new DeleteSnapshotRequest()).withSnapshotId(snapshotId));
-                                    deleteSnapshotSuccess = true;
-                                 } catch (AmazonServiceException var17) {
-                                    System.out.println("AmazonServiceException in handleRequest : OldAMIsDeletion");
-                                    var17.printStackTrace();
-                                 }
+  # Strip the patch version from redis_version var
+  family    = "redis${replace(var.redis_version, "/\\.[\\d]+$/","")}"
+  parameter = "${var.redis_parameters}"
+}
 
-                                 if (deleteSnapshotSuccess) {
-                                    System.out.println("Deleted the Snapshot " + snapshotId + " of the AMI :" + image.getImageId() + " : " + image.getName());
-                                 } else {
-                                    System.out.println("There was a problem deleting the Snapshot : " + snapshotId + " of the AMI :" + image.getImageId() + " : " + image.getName());
-                                 }
-                              }
-                           } else {
-                              System.out.println("There was a problem deleting the AMI : " + image.getImageId() + ": " + image.getName());
-                           }
-                        }
-                     }
-                  }
+#---- Create Elasticache subnet group
 
-                  image = (Image)var7.next();
-                  deregisterFlag = false;
-                  if (image.getName() != null && image.getName().startsWith("DR-i")) {
-                     String creationDateinString = image.getCreationDate();
-                     Date creationDate = this.formatter.parse(creationDateinString);
-                     creationDate = new Date();
-                     long diff = creationDate.getTime() - creationDate.getTime();
-                     int ageinDaysofAMI = (int)TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
-                     System.out.println("Image " + image.getImageId() + " is " + ageinDaysofAMI + " old.");
-                     if (ageinDaysofAMI > 365) {
-                        deregisterFlag = true;
-                     } else if (ageinDaysofAMI > 30 && creationDate.getDate() < 24) {
-                        deregisterFlag = true;
-                     } else {
-                        System.out.println("But the creation date is " + creationDate.getDate() + ". Hence retaining it as per retention policy");
-                     }
-                  }
-               } while(!deregisterFlag);
-
-               System.out.println("Deleting the AMI : " + image.getImageId() + ": " + image.getName());
-               deregiseterSuccess = false;
-
-               try {
-                  this.ec2ClientIreland.deregisterImage((new DeregisterImageRequest()).withImageId(image.getImageId()));
-                  deregiseterSuccess = true;
-               } catch (AmazonServiceException var20) {
-                  System.out.println("AmazonServiceException in handleRequest : OldAMIDeletion");
-                  var20.printStackTrace();
-               }
-
-               if (deregiseterSuccess) {
-                  System.out.println("Deleted the AMI :" + image.getImageId() + ": " + image.getName());
-                  List<BlockDeviceMapping> blockdevicemappings = image.getBlockDeviceMappings();
-                  Iterator var35 = blockdevicemappings.iterator();
-
-                  while(var35.hasNext()) {
-                     BlockDeviceMapping blk = (BlockDeviceMapping)var35.next();
-                     String snapshotId = blk.getEbs().getSnapshotId();
-                     System.out.println("Deleting the Snapshot " + snapshotId + " of the AMI :" + image.getImageId());
-                     boolean deleteSnapshotSuccess = false;
-
-                     try {
-                        this.ec2ClientIreland.deleteSnapshot((new DeleteSnapshotRequest()).withSnapshotId(snapshotId));
-                        deleteSnapshotSuccess = true;
-                     } catch (AmazonServiceException var19) {
-                        System.out.println("AmazonServiceException in handleRequest : OldAMIsDeletion");
-                        var19.printStackTrace();
-                     }
-
-                     if (deleteSnapshotSuccess) {
-                        System.out.println("Deleted the Snapshot " + snapshotId + " of the AMI :" + image.getImageId() + " : " + image.getName());
-                     } else {
-                        System.out.println("There was a problem deleting the Snapshot : " + snapshotId + " of the AMI :" + image.getImageId() + " : " + image.getName());
-                     }
-                  }
-               } else {
-                  System.out.println("There was a problem deleting the AMI : " + image.getImageId() + ": " + image.getName());
-               }
-            }
-         }
-      } catch (AmazonServiceException var21) {
-         System.out.println("AmazonServiceException in handleRequest : OldAMIDeletion");
-         var21.printStackTrace();
-      } catch (IllegalArgumentException var22) {
-         System.out.println("IllegalArgumentException in handleRequest : OldAMIDeletion");
-         var22.printStackTrace();
-      } catch (AmazonClientException var23) {
-         System.out.println("AmazonClientException in  handleRequest :OldAMIDeletion");
-         var23.printStackTrace();
-      } catch (ParseException var24) {
-         System.out.println("ParseException in handleRequest : OldAMIDeletion");
-         var24.printStackTrace();
-      } catch (Exception var25) {
-         System.out.println("Exception in handleRequest : OldAMIDeletion");
-         var25.printStackTrace();
-      }
-
-      System.out.println("Execution Ended in OldAMIDeletion Class at : " + this.dateFormat.format(this.cal.getTime()));
-      return null;
-   }
+resource "aws_elasticache_subnet_group" "tf_redis_subnet_group" {
+  name       = "${replace(format("%.255s", lower(replace("${var.environment}-${var.redis_name}-${data.aws_vpc.vpc.tags["Name"]}", "_", "-"))), "/\\s/", "-")}"
+  subnet_ids = ["${data.terraform_remote_state.vpc.private_subnets}"]
 }
