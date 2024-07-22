@@ -3,37 +3,9 @@
 # File containing AMI IDs
 AMI_FILE="ami-ids.txt"
 
-# Read each AMI ID from the file and deregister it
+# Read each AMI ID from the file and describe it
 while IFS= read -r ami_id; do
-    echo "Deregistering AMI: $ami_id"
-    aws ec2 deregister-image --image-id "$ami_id"
+    echo "Details for AMI: $ami_id"
+    aws ec2 describe-images --image-ids "$ami_id" --query 'Images[*].{ID:ImageId,Name:Name,CreationDate:CreationDate,State:State,OwnerId:OwnerId}' --output table
+    echo ""
 done < "$AMI_FILE"
-
-echo "All specified AMIs have been deregistered."
-
-#!/bin/bash
-
-# File containing AMI IDs
-AMI_FILE="ami-ids.txt"
-
-# Read each AMI ID from the file
-while IFS= read -r ami_id; do
-    echo "Processing AMI: $ami_id"
-    
-    # Get the snapshot IDs associated with the AMI
-    snapshot_ids=$(aws ec2 describe-images --image-ids "$ami_id" --query 'Images[*].BlockDeviceMappings[*].Ebs.SnapshotId' --output text)
-    
-    # Deregister the AMI
-    echo "Deregistering AMI: $ami_id"
-    aws ec2 deregister-image --image-id "$ami_id"
-    
-    # Delete the snapshots
-    for snapshot_id in $snapshot_ids; do
-        echo "Deleting Snapshot: $snapshot_id"
-        aws ec2 delete-snapshot --snapshot-id "$snapshot_id"
-    done
-
-done < "$AMI_FILE"
-
-echo "All specified AMIs and their snapshots have been deleted."
-
