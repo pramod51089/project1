@@ -1,14 +1,43 @@
-resource "aws_sns_topic_subscription" "this" {
-  for_each       = { for k, v in var.subscriptions : k => v if var.create_new_sns_topic && var.create_subscription && v.endpoint != null}
-  endpoint       = each.value.endpoint
-  protocol       = each.value.protocol
-  subscription_role_arn = each.value.protocol == "firehose" ? each.value.subscription_role_arn : null
-  topic_arn      = aws_sns_topic.this[0].arn
-  confirmation_timeout_in_minutes = lookup(each.value, "confirmation_timeout_in_minutes", null)
-  delivery_policy = lookup(each.value, "delivery_policy", null)
-  endpoint_auto_confirms = lookup(each.value, "endpoint_auto_confirms", false)
-  filter_policy  = lookup(each.value, "filter_policy", null)
-  raw_message_delivery = lookup(each.value, "raw_message_delivery", false)
-  filter_policy_scope = lookup(each.value, "filter_policy_scope", null)
-  redrive_policy = lookup(each.value, "redrive_policy", null)
+variable "subscriptions" {
+  description = "A map of SNS subscriptions to create."
+  type = map(object({
+    endpoint                      = string
+    protocol                      = string
+    subscription_role_arn         = string
+    confirmation_timeout_in_minutes = number
+    delivery_policy               = string
+    endpoint_auto_confirms        = bool
+    filter_policy                 = string
+    raw_message_delivery          = bool
+    filter_policy_scope           = string
+    redrive_policy                = string
+  }))
+  default = {}
+}
+
+subscriptions = {
+  subscription1 = {
+    endpoint                      = "https://example.com/endpoint1"
+    protocol                      = "https"
+    subscription_role_arn         = "arn:aws:iam::123456789012:role/SNSToFirehoseRole"
+    confirmation_timeout_in_minutes = 5
+    delivery_policy               = ""
+    endpoint_auto_confirms        = false
+    filter_policy                 = ""
+    raw_message_delivery          = false
+    filter_policy_scope           = ""
+    redrive_policy                = ""
+  },
+  subscription2 = {
+    endpoint                      = "https://example.com/endpoint2"
+    protocol                      = "https"
+    subscription_role_arn         = "arn:aws:iam::123456789012:role/SNSToFirehoseRole"
+    confirmation_timeout_in_minutes = 5
+    delivery_policy               = ""
+    endpoint_auto_confirms        = false
+    filter_policy                 = ""
+    raw_message_delivery          = false
+    filter_policy_scope           = ""
+    redrive_policy                = ""
+  }
 }
