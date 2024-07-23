@@ -23,7 +23,11 @@ subscriptions = {
     confirmation_timeout_in_minutes = 5
     delivery_policy               = ""
     endpoint_auto_confirms        = false
-    filter_policy                 = ""
+    filter_policy                 = jsonencode({
+      "attribute1": ["value1", "value2"],
+      "attribute2": [{"numeric": [">", 100]}],
+      "attribute3": [{"prefix": "prefixValue"}]
+    })
     raw_message_delivery          = false
     filter_policy_scope           = ""
     redrive_policy                = ""
@@ -35,7 +39,11 @@ subscriptions = {
     confirmation_timeout_in_minutes = 5
     delivery_policy               = ""
     endpoint_auto_confirms        = false
-    filter_policy                 = ""
+    filter_policy                 = jsonencode({
+      "attribute1": ["value1", "value2"],
+      "attribute2": [{"numeric": [">", 100]}],
+      "attribute3": [{"prefix": "prefixValue"}]
+    })
     raw_message_delivery          = false
     filter_policy_scope           = ""
     redrive_policy                = ""
