@@ -1,3 +1,1 @@
-Error: expected filter_policy_scope to be one of ["MessageAttributes" "MessageBody"], got 
-│
-│   with aws_sns_topic_subscription.this["subscription2"],
+expected filter_policy_scope to be one of ["MessageAttributes" "MessageBody"], got {"eventType": ["order_placed", "order_shipped"], "price": [{"numeric": [">", 100]}], "customer": [{"prefix": "VIP_"}]}
