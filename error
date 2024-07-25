@@ -1,1 +1,7 @@
-Error: "key": required field is not set
+Error: Unable to find remote state
+│
+│   with data.terraform_remote_state.kms,
+│   on data.tf line 17, in data "terraform_remote_state" "kms":
+│   17: data "terraform_remote_state" "kms" {
+│
+│ No stored state was found for the given workspace in the given backend.
