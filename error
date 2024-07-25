@@ -1,13 +1,1 @@
-data "terraform_remote_state" "kms" {
-  backend   = "s3"
-  workspace = terraform.workspace
-
-  config = {
-    bucket = var.terraform_remote_state_bucket
-    key    = var.terraform_remote_state_kms_key
-    region = var.terraform_remote_state_region
-    #role_arn = var.aws_provider_role_arn
-    #session_name = var.aws_session_name
-    #external_id  = var.aws_external_id
-  }
-}
+Error: "key": required field is not set
