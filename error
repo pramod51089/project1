@@ -1,47 +1,13 @@
-variable "subscriptions" {
-  description = "A map of SNS subscriptions to create."
-  type = map(object({
-    endpoint                      = string
-    protocol                      = string
-    subscription_role_arn         = string
-    confirmation_timeout_in_minutes = number
-    delivery_policy               = string
-    endpoint_auto_confirms        = bool
-    filter_policy                 = string
-    raw_message_delivery          = bool
-    filter_policy_scope           = string
-    redrive_policy                = string
-  }))
-  default = {}
-}
+data "terraform_remote_state" "kms" {
+  backend   = "s3"
+  workspace = terraform.workspace
 
-subscriptions = {
-  subscription1 = {
-    endpoint                      = "https://example.com/endpoint1"
-    protocol                      = "https"
-    subscription_role_arn         = "arn:aws:iam::123456789012:role/SNSToFirehoseRole"
-    confirmation_timeout_in_minutes = 5
-    delivery_policy               = ""
-    endpoint_auto_confirms        = false
-    filter_policy                 = jsonencode({
-      "attribute1": ["value1", "value2"],
-      "attribute2": [{"numeric": [">", 100]}],
-      "attribute3": [{"prefix": "prefixValue"}]
-    })
-    raw_message_delivery          = false
-    filter_policy_scope           = ""
-    redrive_policy                = ""
-  },
-  subscription2 = {
-    endpoint                      = "https://example.com/endpoint2"
-    protocol                      = "https"
-    subscription_role_arn         = "arn:aws:iam::123456789012:role/SNSToFirehoseRole"
-    confirmation_timeout_in_minutes = 5
-    delivery_policy               = ""
-    endpoint_auto_confirms        = false
-    filter_policy                 = "{\"eventType\": [\"order_placed\", \"order_shipped\"], \"price\": [{\"numeric\": [\">\", 100]}], \"customer\": [{\"prefix\": \"VIP_\"}]}"
-    raw_message_delivery          = false
-    filter_policy_scope           = ""
-    redrive_policy                = ""
+  config = {
+    bucket = var.terraform_remote_state_bucket
+    key    = var.terraform_remote_state_kms_key
+    region = var.terraform_remote_state_region
+    #role_arn = var.aws_provider_role_arn
+    #session_name = var.aws_session_name
+    #external_id  = var.aws_external_id
   }
 }
