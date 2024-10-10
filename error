@@ -1,7 +1,50 @@
-Error: Unable to find remote state
-│
-│   with data.terraform_remote_state.kms,
-│   on data.tf line 17, in data "terraform_remote_state" "kms":
-│   17: data "terraform_remote_state" "kms" {
-│
-│ No stored state was found for the given workspace in the given backend.
+Check number of connection waiting to close : netstat -an|tp | grep CLOSE_WAIT | wc -i
+
+Check number of connection waiting to close : netstat -an|tp | grep ESTAB | wc -i
+
+Check number of Http connection waiting to close : netstat -an|tp | grep http | wc -i
+
+Check connection from Linux server [ccuser@02EUW1MGSRIN01P ~]$ curl -v http://10.65.10.170:22
+
+Check connection from Powershell: Test-NetConnection -ComputerName mail.philips.com -port 8888 -InformationLevel "Detailed"
+
+Test-NetConnection -ComputerName rdsenlbdata01d.cjg2hn5het4v.eu-west-1.rds.amazonaws.com -port 1433 -InformationLevel "Detailed"
+
+telnet localhost 443......on local machine
+
+netstat -ano -p tcp.....to check active connections
+
+you need to check if 161.84.87.198 is able to connect to your appliance server on port 443(through a test-netconnection/tnc). 
+
+to check ping : tnc -ComputerName 10.47.56.106 -port 443
+To check connection from Linux server : curl -vv http://13.95.154.201:22
+
+To check tcpdump on Linux :  #tcpdump -i eth0 src 130.144.20.1
+Get all users list from server
+******************************
+Commands for Linux, suse, amazon Linux servers
+cat /etc/passwd|grep -A 100 ec2-user |awk -F: '{print $1}'
+ 
+For Debian
+cat /etc/passwd|grep -A 100 admin |awk -F: '{print $1}'
+ 
+For Ubuntu
+cat /etc/passwd|grep -A 100 ubuntu |awk -F: '{print $1}'
+ 
+To get admin users
+****************** 
+cat /etc/sudoers|grep ALL |awk '{print $1}' |egrep -v 'wheel|Domain|Defaults|ALL'
+
+cat /etc/group |grep admingroup
+
+If you find % symbol before any name in output of above command, it means its admin group and you need to check how many users are added in admin group. 
+Example: you found %admingroup in above command then use below command to find users in admin group.
+
+Dear all, in order to investigate NOC NL requires following outputs, please provide them:
+ Source IP: 130.138.84.35
+2) Destination IP: 104.40.168.105
+3) Ports numbers used in connection: TCP 1433
+4) Traceroute from the source IP to destination IP
+5) Telnet from the source IP to destination IP via port number used in connection
+6) Has this connection ever worked before? Or is it a completely new connection?
+7) Does the issue reoccur? If possible please provide the previous ticket number.
