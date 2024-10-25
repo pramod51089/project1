@@ -1,20 +1,20 @@
-Filesystem     Type      Size  Used Avail Use% Mounted on
-udev           devtmpfs  3.8G     0  3.8G   0% /dev
-tmpfs          tmpfs     775M  1.5M  774M   1% /run
-/dev/nvme0n1p1 ext4       49G   40G  9.0G  82% /
-tmpfs          tmpfs     3.8G     0  3.8G   0% /dev/shm
-tmpfs          tmpfs     5.0M     0  5.0M   0% /run/lock
-tmpfs          tmpfs     3.8G     0  3.8G   0% /sys/fs/cgroup
-/dev/loop2     squashfs   48M   48M     0 100% /snap/enum4linux/52
-/dev/loop8     squashfs   48M   48M     0 100% /snap/enum4linux/55
-tmpfs          tmpfs     775M   16K  775M   1% /run/user/125
-tmpfs          tmpfs     775M   52K  775M   1% /run/user/1008
-/dev/loop0     squashfs   26M   26M     0 100% /snap/amazon-ssm-agent/7993
-/dev/loop7     squashfs   39M   39M     0 100% /snap/snapd/21759
-/dev/loop9     squashfs   56M   56M     0 100% /snap/core18/2829
-/dev/loop4     squashfs   75M   75M     0 100% /snap/core22/1612
-/dev/loop1     squashfs   75M   75M     0 100% /snap/core22/1621
-/dev/loop3     squashfs   26M   26M     0 100% /snap/amazon-ssm-agent/9565
-/dev/loop11    squashfs   56M   56M     0 100% /snap/core18/2846
-tmpfs          tmpfs     775M     0  775M   0% /run/user/1011
-/dev/loop6     squashfs   45M   45M     0 100% /snap/snapd/22991
+ARG JENKINS_IMAGE
+FROM $JENKINS_IMAGE
+
+RUN mkdir -p /var/www/html
+ADD build.tar.gz /var/www/html/
+RUN chown -R magento:magento /var/www/html/
+
+RUN ln -s /config/cron-newrelic.ini /etc/opt/remi/php82/php.d/newrelic.ini
+
+RUN yum update -y \
+    && yum install crontabs -y
+
+COPY docker/cron/php/conf/magento-cron /var/spool/cron/magento
+RUN chown magento:magento /var/spool/cron/magento
+COPY docker/cron/php/conf/set_env.sh /tmp/set_env.sh
+RUN chown root:root /tmp/set_env.sh
+RUN chmod 777 /tmp/set_env.sh
+
+ENTRYPOINT ["/bin/bash", "-c"]
+CMD ["/tmp/set_env.sh && /usr/bin/php -d memory_limit=2G /var/www/html/bin/magento setup:upgrade --keep-generated --no-interaction && postfix start && /usr/sbin/crond -x sch && /var/www/html/bin/magento cache:clean && /var/www/html/bin/magento cache:flush"]
