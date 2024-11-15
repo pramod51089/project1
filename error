@@ -1,1 +1,1 @@
-Serialization failure: 1213 Deadlock found when trying to get lock; try restarting transaction, query was: UPDATE `customer_entity` SET `default_billing` = ?, `default_shipping` = ? WHERE (entity_id = '10578951')
+RUN apk update -y     && apk add --no-cache tar     && apk upgrade COPY docker/nrflex/mysql-database-config.yml /etc/newrelic-infra/integrations.d/mysql-database-config.yml
